@@ -29,16 +29,28 @@ else
 fi
 
 # OSX
-OSX_CLI_NAME="${CLI_NAME}-darwin-amd64"
-OSX_BINPATH="/tmp/${OSX_CLI_NAME}"
-curl -L -o ${OSX_BINPATH} -s "${URL_BASE}/${VERSION}/${OSX_CLI_NAME}"
-OSX_SHA256=$(shasum -a 256 "${OSX_BINPATH}" | awk '{print $1}')
+# AMD64
+OSX_AMD64_CLI_NAME="${CLI_NAME}-darwin-amd64"
+OSX_AMD64_BINPATH="/tmp/${OSX_AMD64_CLI_NAME}"
+curl -L -o ${OSX_AMD64_BINPATH} -s "${URL_BASE}/${VERSION}/${OSX_AMD64_CLI_NAME}"
+OSX_AMD64_SHA256=$(shasum -a 256 "${OSX_AMD64_BINPATH}" | awk '{print $1}')
+# ARM64
+OSX_ARM64_CLI_NAME="${CLI_NAME}-darwin-arm64"
+OSX_ARM64_BINPATH="/tmp/${OSX_ARM64_CLI_NAME}"
+curl -L -o ${OSX_ARM64_BINPATH} -s "${URL_BASE}/${VERSION}/${OSX_ARM64_CLI_NAME}"
+OSX_ARM64_SHA256=$(shasum -a 256 "${OSX_ARM64_BINPATH}" | awk '{print $1}')
 
 # Linux
-LINUX_CLI_NAME="${CLI_NAME}-linux-amd64"
-LINUX_BINPATH="/tmp/${LINUX_CLI_NAME}"
-curl -L -o ${LINUX_BINPATH} -s "${URL_BASE}/${VERSION}/${LINUX_CLI_NAME}"
-LINUX_SHA256=$(shasum -a 256 "${LINUX_BINPATH}" | awk '{print $1}')
+# AMD64
+LINUX_AMD64_CLI_NAME="${CLI_NAME}-linux-amd64"
+LINUX_AMD64_BINPATH="/tmp/${LINUX_AMD64_CLI_NAME}"
+curl -L -o ${LINUX_AMD64_BINPATH} -s "${URL_BASE}/${VERSION}/${LINUX_AMD64_CLI_NAME}"
+LINUX_AMD64_SHA256=$(shasum -a 256 "${LINUX_AMD64_BINPATH}" | awk '{print $1}')
+# ARM64
+LINUX_ARM64_CLI_NAME="${CLI_NAME}-linux-arm64"
+LINUX_ARM64_BINPATH="/tmp/${LINUX_ARM64_CLI_NAME}"
+curl -L -o ${LINUX_ARM64_BINPATH} -s "${URL_BASE}/${VERSION}/${LINUX_ARM64_CLI_NAME}"
+LINUX_ARM64_SHA256=$(shasum -a 256 "${LINUX_ARM64_BINPATH}" | awk '{print $1}')
 
 CLASS_POSTFIX=$(echo ${BREW_VERSION} | tr -d '.')
 CLASS_POSTFIX=$(echo ${CLASS_POSTFIX} | sed "s/@/AT/g")
@@ -51,13 +63,25 @@ class ${CLASSNAME}${CLASS_POSTFIX} < Formula
 
     if OS.mac?
       kernel = \"darwin\"
-      sha256 \"${OSX_SHA256}\"
+      if Hardware::CPU.intel?
+        sha256 \"${OSX_AMD64_SHA256}\"
+        arch = \"amd64\"
+      elsif Hardware::CPU.arm?
+        sha256 \"${OSX_ARM64_SHA256}\"
+        arch = \"arm64\"
+      end
     elsif OS.linux?
       kernel = \"linux\"
-      sha256 \"${LINUX_SHA256}\"
+      if Hardware::CPU.intel?
+        sha256 \"${LINUX_AMD64_SHA256}\"
+        arch = \"amd64\"
+      elsif Hardware::CPU.arm?
+        sha256 \"${LINUX_ARM64_SHA256}\"
+        arch = \"arm64\"
+      end
     end
 
-    @@bin_name = \"${CLI_NAME}-\" + kernel + \"-amd64\"
+    @@bin_name = \"${CLI_NAME}-\" + kernel + \"-\" + arch
     url baseurl + \"/${VERSION}/\" + @@bin_name
 
     def install
